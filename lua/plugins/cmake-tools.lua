@@ -33,12 +33,17 @@ return {
 				stopOnEntry = false,
 				runInTerminal = false,
 				console = "integratedTerminal",
-				env = {
-					__NV_PRIME_RENDER_OFFLOAD = "1",
-					__GLX_VENDOR_LIBRARY_NAME = "nvidia",
-					__VK_LAYER_NV_optimus = "NVIDIA_only",
-					VK_ICD_FILENAMES = "/usr/share/vulkan/icd.d/nvidia_icd.json",
-				},
+				env = function()
+					if vim.loop.os_uname().sysname == "Linux" then
+						return {
+							__NV_PRIME_RENDER_OFFLOAD = "1",
+							__GLX_VENDOR_LIBRARY_NAME = "nvidia",
+							__VK_LAYER_NV_optimus = "NVIDIA_only",
+							VK_ICD_FILENAMES = "/usr/share/vulkan/icd.d/nvidia_icd.json",
+						}
+					end
+					return {}
+				end,
 			},
 			cmake_executor = { -- executor to use
 				name = "quickfix", -- name of the executor
