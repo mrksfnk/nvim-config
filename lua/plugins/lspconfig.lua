@@ -21,6 +21,16 @@ return {
 		vim.api.nvim_create_autocmd("LspAttach", {
 			group = vim.api.nvim_create_augroup("lspconfig-lsp-attach", { clear = true }),
 			callback = function(event)
+				-- Custom format function to unify keymaps between LSP and non-LSP formatters
+				local format = function(filetype, args)
+					if filetype == "python" then
+						local filename = vim.fn.expand("%:t")
+						vim.cmd("!black --line-length 100 " .. filename)
+					else
+						vim.lsp.buf.format(args)
+					end
+				end
+
 				local map = function(keys, func, desc)
 					vim.keymap.set("n", keys, func, { buffer = event.buf, desc = "LSP: " .. desc })
 				end
@@ -58,6 +68,11 @@ return {
 				-- or a suggestion from your LSP for this to activate.
 				map("<leader>ca", vim.lsp.buf.code_action, "[C]ode [A]ction")
 
+				-- Format current buffer
+				map("<leader>ff", function()
+					format(vim.bo[event.buf].filetype, { async = true })
+				end, "[F]ormat [F]ile")
+
 				-- Opens a popup that displays documentation about the word under your cursor
 				--  See `:help K` for why this keymap
 				map("K", vim.lsp.buf.hover, "Hover Documentation")
@@ -83,6 +98,17 @@ return {
 						callback = vim.lsp.buf.clear_references,
 					})
 				end
+
+				-- Configure format on save
+				vim.api.nvim_create_autocmd("BufWritePre", {
+					buffer = event.buf,
+					callback = function(ev)
+						local enabled_filetypes = { c = true, cpp = true }
+						if enabled_filetypes[vim.bo[ev.buf].filetype] then
+							format(vim.bo[ev.buf].filetype, { async = false })
+						end
+					end,
+				})
 			end,
 		})
 
